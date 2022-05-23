@@ -1,0 +1,298 @@
+make all --print-data-base --no-builtin-variables --no-builtin-rules --question
+# GNU Make 3.82
+# Built for x86_64-redhat-linux-gnu
+# Copyright (C) 2010  Free Software Foundation, Inc.
+# License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+# This is free software: you are free to change and redistribute it.
+# There is NO WARRANTY, to the extent permitted by law.
+
+# Make data base, printed on Sun May 22 11:33:16 2022
+
+# Variables
+
+# automatic
+<D = $(patsubst %/,%,$(dir $<))
+# automatic
+?F = $(notdir $?)
+# default
+.SHELLFLAGS := -c
+# environment
+QTDIR = /usr/lib64/qt-3.3
+# environment
+VSCODE_AGENT_FOLDER = /home/csmajs/pfenn001/.vscode-server
+# makefile (from `Makefile', line 4)
+SRC = lib.cpp                        
+# environment
+VSCODE_LOG_NATIVE = false
+# automatic
+?D = $(patsubst %/,%,$(dir $?))
+# automatic
+@D = $(patsubst %/,%,$(dir $@))
+# automatic
+@F = $(notdir $@)
+# default
+MAKE_VERSION := 3.82
+# makefile
+CURDIR := /home/csmajs/pfenn001/CS152-Phase3
+# makefile
+SHELL = /bin/sh
+# environment
+VSCODE_NLS_CONFIG = {"locale":"en","availableLanguages":{}}
+# environment
+TZ = US/Pacific
+# environment
+_ = /usr/bin/make
+# makefile (from `Makefile', line 2)
+CFLAGS = -g -O0 -std=c++11
+# makefile (from `Makefile', line 1)
+MAKEFILE_LIST :=  Makefile
+# environment
+HISTCONTROL = ignoredups
+# environment
+XDG_DATA_DIRS = /home/csmajs/pfenn001/.local/share/flatpak/exports/share:/var/lib/flatpak/exports/share:/usr/local/share:/usr/share
+# environment
+VSCODE_VERBOSE_LOGGING = true
+# makefile (from `Makefile', line 5)
+OBJS = $(patsubst %.cpp, %.o, $(SRC)) 
+# environment
+LESSOPEN = ||/usr/bin/lesspipe.sh %s
+# environment
+VSCODE_CWD = /home/csmajs/pfenn001
+# environment
+SSH_CONNECTION = 35.129.123.49 54105 169.235.30.120 22
+# environment
+PATH = /home/csmajs/pfenn001/.vscode-server/bin/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5/bin/remote-cli:/home/csmajs/pfenn001/bin:/usr/csshare/bin:/usr/csshare/sbin:/usr/bin/:/bin:/usr/local/bin:/usr/ucb:/sbin:/usr/sbin:/usr/local/sbin:/usr/bin/X11:/usr/X11R6/bin:/usr/local/X11:/usr/local/bin/X11:/usr/openwin/bin:.
+# environment
+QT_GRAPHICSSYSTEM_CHECKED = 1
+# environment
+XDG_RUNTIME_DIR = /run/user/73519
+# environment
+VSCODE_LOG_STACK = false
+# default
+.FEATURES := target-specific order-only second-expansion else-if shortest-stem undefine oneshell archives jobserver check-symlink
+# automatic
+%F = $(notdir $%)
+# environment
+VISUAL = emacs
+# environment
+VSCODE_PIPE_LOGGING = true
+# environment
+PWD = /home/csmajs/pfenn001/CS152-Phase3
+# environment
+VSCODE_IPC_HOOK_CLI = /run/user/73519/vscode-ipc-e01cf9e1-fde0-44ab-a8b2-b6a59e352cb5.sock
+# automatic
+*D = $(patsubst %/,%,$(dir $*))
+# environment
+VSCODE_AMD_ENTRYPOINT = vs/workbench/api/node/extensionHostProcess
+# environment
+HOME = /home/csmajs/pfenn001
+# environment
+LOGNAME = pfenn001
+# environment
+APPLICATION_INSIGHTS_NO_DIAGNOSTIC_CHANNEL = true
+# automatic
++F = $(notdir $+)
+# environment
+VSCODE_HANDLES_UNCAUGHT_ERRORS = true
+# automatic
+^D = $(patsubst %/,%,$(dir $^))
+# environment
+HOSTNAME = bolt.cs.ucr.edu
+# environment
+MAKELEVEL := 0
+# environment
+SSH_ASKPASS = /usr/libexec/openssh/gnome-ssh-askpass
+# default
+MAKE = $(MAKE_COMMAND)
+# default
+MAKECMDGOALS := all
+# environment
+SHLVL = 6
+# makefile (from `Makefile', line 1)
+CC = g++
+# environment
+XDG_SESSION_ID = 21953
+# environment
+USER = pfenn001
+# environment
+QTLIB = /usr/lib64/qt-3.3/lib
+# automatic
+%D = $(patsubst %/,%,$(dir $%))
+# default
+MAKE_COMMAND := make
+# default
+.VARIABLES := 
+# automatic
+*F = $(notdir $*)
+# makefile
+MAKEFLAGS = Rrqp
+# environment
+MFLAGS = -Rrqp
+# environment
+SSH_CLIENT = 35.129.123.49 54105 22
+# environment
+MAIL = /var/spool/mail/pfenn001
+# automatic
++D = $(patsubst %/,%,$(dir $+))
+# environment
+BROWSER = /home/csmajs/pfenn001/.vscode-server/bin/c3511e6c69bb39013c4a4b7b9566ec1ca73fc4d5/bin/helpers/browser.sh
+# environment
+VSCODE_HANDLES_SIGPIPE = true
+# default
+MAKEFILES := 
+# automatic
+<F = $(notdir $<)
+# environment
+EDITOR = emacs
+# environment
+LC_ALL = C
+# automatic
+^F = $(notdir $^)
+# default
+SUFFIXES := 
+# environment
+HISTSIZE = 100
+# default
+.INCLUDE_DIRS = /usr/include /usr/local/include /usr/include
+# environment
+QTINC = /usr/lib64/qt-3.3/include
+# default
+.RECIPEPREFIX := 
+# makefile
+.DEFAULT_GOAL := miniL
+# environment
+NNTPSERVER = news.cs.ucr.edu
+# environment
+LANG = C
+# environment
+TERM = xterm-color
+# environment
+VSCODE_EXTHOST_WILL_SEND_SOCKET = true
+# variable set hash-table stats:
+# Load=79/1024=8%, Rehash=0, Collisions=12/103=12%
+
+# Pattern-specific Variable Values
+
+# No pattern-specific variable values.
+
+# Directories
+
+# . (device 43, inode 23913486): 25 files, no impossibilities.
+
+# 25 files, no impossibilities in 1 directories.
+
+# Implicit Rules
+
+%.o: %.cpp
+#  recipe to execute (from `Makefile', line 12):
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# 1 implicit rules, 0 (0.0%) terminal.
+
+# Files
+
+# Not a target:
+all:
+#  Command line target.
+#  Implicit rule search has been done.
+#  File does not exist.
+#  File has not been updated.
+
+# Not a target:
+miniL-parser.o:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+# Not a target:
+miniL-lex.o:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+# Not a target:
+miniL.lex:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+# Not a target:
+.SUFFIXES:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+# Not a target:
+Makefile:
+#  Implicit rule search has been done.
+#  Last modified 2022-05-01 13:48:26.900981938
+#  File has been updated.
+#  Successfully updated.
+
+# Not a target:
+lib.o:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+miniL: miniL-lex.o miniL-parser.o lib.o
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 9):
+	$(CC) $^ -o $@ -lfl
+
+# Not a target:
+.DEFAULT:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+# Not a target:
+miniL.y:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+
+clean:
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 21):
+	rm -f *.o miniL-lex.cpp miniL-parser.cpp miniL-parser.hpp stack.hh *.output *.dot miniL
+
+miniL-parser.cpp: miniL.y
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 18):
+	bison -d -v -g -o $@ $<
+
+miniL-lex.cpp: miniL.lex miniL-parser.cpp
+#  Implicit rule search has not been done.
+#  Modification time never checked.
+#  File has not been updated.
+#  recipe to execute (from `Makefile', line 15):
+	flex -o $@ $< 
+
+# files hash-table stats:
+# Load=13/1024=1%, Rehash=0, Collisions=0/30=0%
+# VPATH Search Paths
+
+# No `vpath' search paths.
+
+ 
+make: *** No rule to make target `all'.  Stop.
+
+# No general (`VPATH' variable) search path.
+
+# # of strings in strcache: 0 / lookups = 50 / hits = 50
+# # of strcache buffers: 1 (* 8176 B/buffer = 8176 B)
+# strcache used: total = 0 (345) / max = 0 / min = 8176 / avg = 0
+# strcache free: total = 0 (7831) / max = 0 / min = 8176 / avg = 0
+
+# strcache hash-table stats:
+# Load=33/8192=0%, Rehash=0, Collisions=1/50=2%
+# Finished Make data base on Sun May 22 11:33:16 2022
+
+ 
