@@ -8,357 +8,828 @@ extern int currLine;
 extern int currCol;
 extern int yylex(void);
 void yyerror(const char *msg);
-map<string, _symbol*> table;
+
+
+TableManager tm;
+bool errorFlag = 0;
 %}
 
 %define api.value.type {union YYSTYPE}
 %error-verbose
 %start Program
-%token<str_val> IDENT;
-%token<int_val> NUMBER;
-%type<_IDS> Identifiers %type<_DECL> Declaration %type<_VAR> Var %type<_TERM> Term %type<_TERMS> Terms %type<_MULT_EXPR> Multiplicative-Expr %type<_REL_EXPR> Relation-Expr %type<_EXPR> Expression %type<_EXPRS> Expressions %type<_MULT_EXPRS> Multiplicative-Exprs %type<_COMP> Comp %type<_REL_EXPRS> Relation-Exprs %type<_BOOL_EXPR> Bool-Expr %type<_REL_AND_EXPR> Relation-And-Expr %type<_REL_AND_EXPRS> Relation-And-Exprs %type<_VARS> Vars %type<_STATEMENT> Statement %type<_SSS> Statements_Semi %type<_SS> Statement_Semi %type<_DS> Declaration_Semi %type<_DSS> Declarations_Semi %type<_FUNC> Function %type<_FUNCS> Functions %type<_PROGRAM> Program;
-%token FUNCTION BEGIN_PARAMS END_PARAMS BEGIN_LOCALS END_LOCALS BEGIN_BODY END_BODY INTEGER ARRAY ENUM OF IF THEN ENDIF ELSE WHILE DO BEGINLOOP ENDLOOP CONTINUE READ WRITE AND OR NOT TRUE FALSE RETURN SUB ADD MULT DIV MOD EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN L_SQUARE_BRACKET R_SQUARE_BRACKET ASSIGN;
+%token<str_val> IDENT NUMBER;
+%type<sym_val> Identifiers %type<sym_val> Declaration %type<sym_val> Var %type<sym_val> Term %type<sym_val> Terms %type<sym_val> Multiplicative-Expr %type<sym_val> Relation-Expr %type<sym_val> Expression %type<sym_val> Expressions %type<sym_val> Multiplicative-Exprs %type<sym_val> Comp %type<sym_val> Relation-Exprs %type<sym_val> Bool-Expr %type<sym_val> Relation-And-Expr %type<sym_val> Relation-And-Exprs %type<sym_val> Vars %type<sym_val> Statement %type<sym_val> Statements  %type<sym_val> Declarations %type<sym_val> Function %type<sym_val> Functions %type<sym_val> Program;
+%left FUNCTION BEGIN_PARAMS END_PARAMS BEGIN_LOCALS END_LOCALS BEGIN_BODY END_BODY INTEGER ARRAY ENUM OF IF THEN ENDIF ELSE WHILE DO BEGINLOOP ENDLOOP CONTINUE READ WRITE AND OR NOT TRUE FALSE RETURN SUB ADD MULT DIV MOD EQ NEQ LT GT LTE GTE SEMICOLON COLON COMMA L_PAREN R_PAREN L_SQUARE_BRACKET R_SQUARE_BRACKET ASSIGN;
 %% 
 
 Program:
    Functions {
-       _functions* fs = dynamic_cast<_functions*>($1);
-       $$ = new _program(fs);
-   }   
-    | {$$ = new _program();}   
-    ;
-
-//Functions will need their own symbol table pushed onto the stack.
-Functions:
-    Function Functions {
-        _function* f = dynamic_cast<_function*>($1);
-        _functions* fs = dynamic_cast<_functions*>($2);
-        $$ = new _functions(f,fs);
-    }    
-    |  {$$ = new _functions();}    
-    ;
-
-Declaration_Semi:
-    Declaration SEMICOLON {
-        _declaration* d = dynamic_cast<_declaration*>($1);
-        $$ = new _declaration_semi(d);
-    }    
-    ;
-
-Declarations_Semi:
-    Declaration_Semi Declarations_Semi {
-        _declaration_semi* ds = dynamic_cast<_declaration_semi*>($1);
-        _declarations_semi* dss = dynamic_cast<_declarations_semi*>($2);
-        $$ = new _declarations_semi(ds,dss);
-    }    
-    | {$$ = new _declarations_semi();}    
-    ;
-
-Statement_Semi:
-    Statement SEMICOLON {
-        _statement* s = dynamic_cast<_statement*>($1);
-        $$ = new _statement_semi(s);
-    }    
-    ;
-
-Statements_Semi:
-    Statement_Semi Statements_Semi {
-        _statement_semi* s = dynamic_cast<_statement_semi*>($1);
-        _statements_semi* ss = dynamic_cast<_statements_semi*>($2);
-        $$ = new _statements_semi(s,ss);
-    }    
-    |  {$$ = new _statements_semi();}    
-    ;
-
-Function:
-    FUNCTION IDENT SEMICOLON BEGIN_PARAMS Declarations_Semi END_PARAMS
-    BEGIN_LOCALS Declarations_Semi END_LOCALS BEGIN_BODY Statements_Semi END_BODY {
-        _ident* i = new _ident($2);
-        _declarations_semi* d1 = dynamic_cast<_declarations_semi*>($5);
-        _declarations_semi* d2 = dynamic_cast<_declarations_semi*>($8);
-        _statements_semi* s = dynamic_cast<_statements_semi*>($11);
-        $$ = new _function(i,d1,d2,s);
-
+    if(!tm.checkFunction("main")){
+        yyerror("main function not found");
     }
-    ;
-
-Identifiers:
-    IDENT COMMA Identifiers {
-        _ident* id = new _ident($1);
-        _identifiers* ids = dynamic_cast<_identifiers*>($3);
-        $$ = new _identifiers(id,ids);
-    }    
-    | IDENT {$$ = new _identifiers(new _ident($1));}   
-    |  {$$ = new _identifiers();}    
-    ;
-
-Declaration:
-    Identifiers COLON ENUM L_PAREN Identifiers R_PAREN {
+    //if(errorFlag){exit(1);}
+    fstream outfile;
+    outfile.open("output.s", fstream::out);
+    outfile << $1->getCode();
+    outfile.close();
 
 
-    }    
-    | Identifiers COLON INTEGER {
-        _ident* i = new _ident($1);
-        map<string,_symbol*>::Iterator p = table.insert($1,i);
-        i->setPlace(p);
-    }    
-    | Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER {
-        _ident
-
+   }   
+    | {
+        yyerror("No program found");
     }   
     ;
 
-Vars:
-    Var Vars {
-        _var* v = dynamic_cast<_var*>($1);
-        _vars* vs = dynamic_cast<_vars*>($2);
-        $$ = new _vars(v,vs);
+//Functions will need their own symbol table pushed onto the stack.
+Function:
+    FUNCTION IDENT SEMICOLON BEGIN_PARAMS Declarations END_PARAMS
+    BEGIN_LOCALS Declarations END_LOCALS BEGIN_BODY Statements END_BODY {
 
-    }    
-    | COMMA Var Vars {
-        _var* v = dynamic_cast<_var*>($2);
-        _vars* vs = dynamic_cast<_vars*>($3);
-        $$ = new _vars(v,vs);
-        $$->setCommaFlag();
-    }    
-    |  {$$ = new _vars();}    
+        
+        string n = string($2);
+        int space_index = n.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_");
+
+        if(space_index != -1){
+            n = n.substr(0,space_index);
+        }
+        else{
+            n = n;
+        }
+        if(tm.checkFunction(n)){
+            yyerror("Function already exists");
+        }
+        else{
+            tm.addFunction(n);
+        }
+     
+        symbol* d1 = ($5);
+        string code = "func " + n + '\n';
+        symbol* d2 = ($8);
+        symbol* s = ($11);
+        istringstream iss(d1->getCode());
+        string line;
+        string new_code = "";
+        int count = 0;
+        while(getline(iss,line)){
+            
+            new_code += line + '\n';
+            if(line.find("__") == -1){
+                new_code += "= " + line.substr(2,line.length()-1) + ", $" + to_string(count) + '\n';
+                count++;
+            }
+        }
+
+        code += new_code + d2->getCode() + s->getCode();
+        code += "endfunc\n\n";
+        $$ = new symbol(n, code);
+  
+    }
     ;
 
+
+Functions:
+    Function Functions {
+        symbol* f = ($1);
+        symbol* fs = ($2);
+        string code = f->getCode() + fs->getCode();
+        vector<string> names = fs->getNames();
+        if(f->getName() != ""){
+            names.push_back(f->getName());
+        }
+        $$ = new symbol("", code);
+        $$->setNames(names);
+    }    
+    |  {
+        $$ = new symbol();
+    }    
+    ;
+
+
 Statement:
-    Var ASSIGN Expression {
-        _var* v = dynamic_cast<_var*>($1);
-        _expression* e = dynamic_cast<_expression*>($3);
-        $$ = new _statement(v,e);
+    Var ASSIGN Expression SEMICOLON {
+        symbol* v = ($1);
+        symbol* e = ($3);
+        string code = v->getCode() + e->getCode();
+
+        //if the variable is an array element
+        if(v->getIndex() != ""){
+            
+            code += "[]= " + v->getName() + ", " + v->getIndex() + ", " + e->getName() + '\n';
+        }
+        else{
+            code += "= " + v->getName() + ", " + e->getName() + '\n';
+        }
+        
+        $$ = new symbol("", code);
+        $$->setNames(v->getNames());
+        $$->addNames(e->getNames());
+
     }    
-    | IF Bool-Expr THEN Statements_Semi ENDIF {
-        _bool_expr* b = dynamic_cast<_bool_expr*>($2);
-        _statements_semi* s = dynamic_cast<_statements_semi*>($4);
-        $$ = new _statement(b,s,1);
+    | IF Bool-Expr THEN Statements ENDIF SEMICOLON {
+        symbol* b = ($2);
+        symbol* s = ($4);
+        string temp = tm.getTemp();
+        string code = b->getCode() + s->getCode();
+        string label = tm.getLabel();
+        code += ". " + temp + '\n';
+        code += "! " + temp + ", " + b->getName() + '\n';
+        code += "?:= " + label + ", " + temp + '\n';
+        code += s->getCode();
+        code += ": " + label + '\n';
+        string name = "";
+        $$ = new symbol(name, code);
+        $$->setNames(b->getNames());
+        $$->addNames(s->getNames());
+
+
     }    
-    | IF Bool-Expr THEN Statements_Semi ELSE Statements_Semi ENDIF {
-        _bool_expr* be = dynamic_cast<_bool_expr*>($2);
-        _statements_semi* ss1 = dynamic_cast<_statements_semi*>($4);
-        _statements_semi* ss2 = dynamic_cast<_statements_semi*>($6);
-        $$ = new _statement(be,ss1,ss2);
+    | IF Bool-Expr THEN Statements ELSE Statements ENDIF SEMICOLON {
+        symbol* b = ($2);
+        symbol* s1 = ($4);
+        symbol* s2 = ($6);
+        string code = b->getCode() + s1->getCode() + s2->getCode();
+        string label = tm.getLabel();
+        string label2 = tm.getLabel();
+        string temp = tm.getTemp();
+        code += ". " + temp + "\n";
+        code += "! " + temp + ", " + b->getName() + "\n";
+        code += "?:= " + label + ", " + temp + "\n";
+        code += s1->getCode();
+        code += ":= " + label2 + "\n";
+        code += ": " + label + "\n";
+        code += s2->getCode();
+        code += ": " + label2 + "\n";
+        string name = "";
+        $$ = new symbol(name, code);
+        $$->setNames(s1->getNames());
+        $$->addNames(s2->getNames());
     }    
-    | WHILE Bool-Expr BEGINLOOP Statements_Semi ENDLOOP {
-        _bool_expr* be = dynamic_cast<_bool_expr*>($2);
-        _statements_semi* ss = dynamic_cast<_statements_semi*>($4);
-        $$ = new _statement(be,ss,3);
+    | WHILE Bool-Expr BEGINLOOP Statements ENDLOOP SEMICOLON {
+        symbol* b = ($2);
+        symbol* s = ($4);
+        string code = b->getCode() + s->getCode();
+        string label = tm.getLabel();
+        string label2 = tm.getLabel();
+        string temp = tm.getTemp();
+        code += ": " + label + "\n";
+        code += ". " + temp + "\n";
+        code += "! " + temp + ", " + b->getName() + "\n";
+        code += "?:= " + label2 + ", " + temp + "\n";
+        code += s->getCode();
+        code += "?:= " + label + ", " + b->getName() + "\n";
+        code += ": " + label2 + "\n";
+        string name = "";
+        $$ = new symbol(name, code);
+        $$->setNames(b->getNames());
+        $$->addNames(s->getNames());
+
+
     }    
-    | DO BEGINLOOP Statements_Semi ENDLOOP WHILE Bool-Expr {
-        _statements_semi* ss = dynamic_cast<_statements_semi*>($3);
-        _bool_expr* be = dynamic_cast<_bool_expr*>($6);
-        $$ = new _statement(ss,be);
+    | DO BEGINLOOP Statements ENDLOOP WHILE Bool-Expr SEMICOLON {
+        symbol* s = ($3);
+        symbol* b = ($6);
+        string code = s->getCode() + b->getCode();
+        string label = tm.getLabel();
+        code += ": " + label + "\n";
+        code += s->getCode();
+        code += "?:= " + label + ", " + b->getName() + "\n";
+        string name = "";
+        $$ = new symbol(name, code);
+        $$->setNames(s->getNames());
+        $$->addNames(b->getNames());
+
     }    
-    | READ Vars  {
-        _vars* v = dynamic_cast<_vars*>($2);
-        $$ = new _statement("READ", v);
+    | READ Vars SEMICOLON  {
+        symbol* v = ($2);
+        string code = v->getCode();
+        string name = "";
+        vector<string> names = v->getNames();
+        for(int i = 0; i < names.size(); i++){
+            int type = tm.checkType(names[i]);
+            if(type == 0){
+                code += ".< " + names[i] + '\n';
+            }
+            else{
+                code += ".[]< " + names[i] + ", " + to_string(type) + '\n';
+            }
+        }
+        $$ = new symbol(name, code);
+        $$->setNames(names);
+        
+
+
     }    
-    | WRITE Vars {
-        _vars* v = dynamic_cast<_vars*>($2);
-        $$ = new _statement("WRITE", v);
+    | WRITE Vars SEMICOLON {
+        symbol* v = ($2);
+        string code = v->getCode();
+        string name = "";
+        vector<string> names = v->getNames();
+        for(int i = 0; i < names.size(); i++){
+            int type = tm.checkType(names[i]);
+            if(type == 0){
+                code += ".> " + names[i] + '\n';
+            }
+            else{
+                code += ".[]> " + names[i] + ", " + to_string(type) + '\n';
+            }
+        }
+        $$ = new symbol(name, code);
+        $$->setNames(names);
+
     }    
-    | CONTINUE {
-        $$ = new _statement("c");
+    | CONTINUE SEMICOLON {
+        string name = "";
+        string code = ": " + tm.getLastLabel() + "\n";
+        $$ = new symbol(name, code);
     }    
-    | RETURN Expression {
-        _expression* e = dynamic_cast<_expression*>($2);
-        $$ = new _statement(e);
+    | RETURN Expression SEMICOLON {
+        symbol* e = ($2);
+        string code = e->getCode();
+        code += "ret " + e->getName() + "\n";
+        string name = "";
+        $$ = new symbol(name, code);
+        $$->setNames(e->getNames());
     }    
     ; 
 
-Relation-And-Exprs: 
-    OR Relation-And-Expr Relation-And-Exprs {
-        _relation_and_expr* re = dynamic_cast<_relation_and_expr*>($2);
-        _relation_and_exprs* res = dynamic_cast<_relation_and_exprs*>($3);
-        $$ = new _relation_and_exprs(re,res);
+
+
+Statements:
+    Statement Statements {
+        symbol* s = ($1);
+        symbol* ss = ($2);
+        string code = s->getCode() + ss->getCode();
+        vector<string> names = s->getNames();
+        if(s->getName() != ""){
+            names.push_back(s->getName());
+        }
+        $$ = new symbol("", code);
+        $$->setNames(names);
+        $$->addName(s->getName());
     }    
-    | {$$ = new _relation_and_exprs();}    
+    |  {
+        $$ = new symbol();
+    }    
     ;
+
 
 Bool-Expr:
     Relation-And-Expr Relation-And-Exprs {
-        _relation_and_expr* re = dynamic_cast<_relation_and_expr*>($1);
-        _relation_and_exprs* res = dynamic_cast<_relation_and_exprs*>($2);
-        $$ = new _bool_expr(re,res);
+        symbol* r = ($1);
+        symbol* rs = ($2);
+
+        string code = r->getCode() + rs->getCode();
+        string temp = tm.getTemp();
+        code += ". " + temp + '\n';
+        code += "= " + temp + ", " + r->getName() + '\n';
+        vector<node> nodes = rs->getNodes();
+        for(int i = 0; i < nodes.size(); i++){
+            if(nodes[i].getName() == "" || nodes[i].getOp() == ""){
+                continue;
+            }
+            code += nodes[i].getOp() + temp + ", " + nodes[i].getName() + '\n';
+        }
+
+        $$ = new symbol(temp, code);
+        $$->setNames(rs->getNames());
+        $$->addName(r->getName());
+
+    }    
+    ;
+
+Relation-And-Exprs: 
+    OR Relation-And-Expr Relation-And-Exprs {
+        symbol* r = ($2);
+        symbol* rs = ($3);
+        string code = r->getCode() + rs->getCode();
+
+        $$ = new symbol("", code);
+        $$->addNodes(rs->getNodes());
+        $$->addNode(r->getName(), "||");
+        $$->setNames(rs->getNames());
+        $$->addName(r->getName());
+    }    
+    | {
+        $$ = new symbol();
+    }    
+    ;
+
+Relation-And-Expr:
+    Relation-Expr Relation-Exprs {
+        symbol* r = ($1);
+        symbol* rs = ($2);
+
+        string code= r->getCode() + rs->getCode();
+        string temp = tm.getTemp();
+        code += ". " + temp + '\n';
+        code += "= " + temp + ", " + r->getName() + '\n';
+        vector<node> nodes = rs->getNodes();
+        for(int i = 0; i < nodes.size(); i++){
+            if(nodes[i].getOp() == "" || nodes[i].getName() == ""){
+                continue;
+            }
+            code += nodes[i].getOp() + " " + temp + ", " + temp + ", " + nodes[i].getName() + '\n';
+        }
+
+        $$ = new symbol(temp, code);
+        $$->setNames(rs->getNames());
+        $$->addName(r->getName());
+
+
     }    
     ;
 
 Relation-Exprs:
     AND Relation-Expr Relation-Exprs {
-        _relation_expr* re = dynamic_cast<_relation_expr*>($2);
-        _relation_exprs* res = dynamic_cast<_relation_exprs*>($3);
-        $$ = new _relation_exprs(re,res);
+        symbol* r = ($2);
+        symbol* rs = ($3);
+        string code = r->getCode() + rs->getCode();
+        $$ = new symbol("", code);
+        $$->addNodes(rs->getNodes());
+        $$->addNode(r->getName(), "&&");
+        $$->setNames(rs->getNames());
+        $$->addName(r->getName());
+
     }    
-    | {$$ = new _relation_exprs();}    
-    ;
-
-Relation-And-Expr:
-    Relation-Expr Relation-Exprs {
-        _relation_expr* re = dynamic_cast<_relation_expr*>($1);
-        _relation_exprs* res = dynamic_cast<_relation_exprs*>($2);
-        $$ = new _relation_and_expr(re,res);
-
+    | {
+        $$ = new symbol();
     }    
     ;
 
 Relation-Expr:
     NOT Expression Comp Expression {
-        _expression* exp1 = dynamic_cast<_expression*>($2);
-        _expression* exp2 = dynamic_cast<_expression*>($4);
-        _comp* c = dynamic_cast<_comp*>($3);
-        _relation_expr* re = new _relation_expr(exp1,exp2,c);
-        re->setNotFlag();
-        $$ = re;
+        symbol* e = ($2);
+        symbol* e2 = ($4);
+        symbol* c = ($3);
+        string dest_var = tm.getTemp();
+        string not_var = tm.getTemp();
+        string code = e->getCode() + e2->getCode();
+        code += ". " + dest_var + '\n';
+        code += ". " + not_var + '\n';
+        code += c->getCode() + " " + dest_var + ", " + e->getName() + ", " + e2->getName() + '\n';
+        code += "! " + not_var + ", " + dest_var + '\n';
+        $$ = new symbol(not_var, code);
+        $$->addNames(e->getNames());
+        $$->addNames(e2->getNames());
+
 
     }    
-    | NOT TRUE {$$ = new _relation_expr(0);}
-    | NOT FALSE {$$ = new _relation_expr(1);}    
+    | NOT TRUE {
+        $$ = new symbol("0", "");
+    }
+    | NOT FALSE {
+        $$ = new symbol("1", "");
+    }    
     | NOT L_PAREN Bool-Expr R_PAREN {
-        _bool_expr* be = dynamic_cast<_bool_expr*>($3);
-        $$ = new _relation_expr();
-
+        symbol* b = ($3);
+        string code = b->getCode();
+        string temp = tm.getTemp();
+        code += ". " + temp + '\n';
+        code += "= " + temp + ", " + b->getName() + '\n';
+        code += "! " + temp + ", " + temp + '\n';
+        $$ = new symbol(temp, code);
+        $$->setNames(b->getNames());
      }    
-    | Expression Comp Expression {}    
-    | TRUE {$$ = new _relation_expr(1);}    
-    | FALSE {$$ = new _relation_expr(0);}    
-    | L_PAREN Bool-Expr R_PAREN {}    
+    | Expression Comp Expression {
+        symbol* e = ($1);
+        symbol* e2 = ($3);
+        symbol* c = ($2);
+        string dest_var = tm.getTemp();
+        string code = e->getCode() + e2->getCode();
+        code += ". " + dest_var + '\n';
+        code += c->getCode() + " " + dest_var + ", " + e->getName() + ", " + e2->getName() + '\n';
+        $$ = new symbol(dest_var, code);
+        $$->addName(e->getName());
+        $$->addName(e2->getName());
+
+    }    
+    | TRUE {
+        $$ = new symbol("1", "");
+    }    
+    | FALSE {
+        $$ = new symbol("0", "");
+    }    
+    | L_PAREN Bool-Expr R_PAREN {
+        symbol* b = ($2);
+        $$ = new symbol(b->getName(), b->getCode());
+        $$->setNames(b->getNames());
+    }    
     ;
 
 Comp:
-    EQ {$$ = new _comp("EQ");}    
-    | NEQ {$$ = new _comp("NEQ");}    
-    | LT {$$ = new _comp("LT");}    
-    | GT {$$ = new _comp("GT");}    
-    | LTE {$$ = new _comp("LTE");}    
-    | GTE {$$ = new _comp("GTE");}    
+    EQ { $$ = new symbol("==", "==") ; }
+    | NEQ {     $$ = new symbol("!=", "!=") ; } 
+    | LT {   $$ = new symbol("<", "<") ; } 
+    | GT {  $$ = new symbol(">", ">") ; } 
+    | LTE {     $$ = new symbol("<=", "<=") ; } 
+    | GTE {    $$ = new symbol(">=", ">=") ; } 
+    ;
+
+Multiplicative-Expr:
+    Term Terms {
+        symbol* t = ($1);
+        symbol* ts = ($2);
+
+        string code = t->getCode() + ts->getCode();
+        string temp = tm.getTemp();
+
+        code += ". " + temp + '\n';
+        code += "= " + temp + ", " + t->getName() + '\n';
+        vector<node> nodes = ts->getNodes();
+        for(int i = 0; i < nodes.size(); i++){
+            if(nodes[i].getOp() == "" || nodes[i].getName() == ""){
+                continue;
+            }
+            code += nodes[i].getOp() + " " + temp + ", " + temp + ", " + nodes[i].getName() + '\n';
+        }
+
+
+        $$ = new symbol(temp, code);
+        $$->setNames(ts->getNames());
+        $$->addName(t->getName());
+
+ 
+    }
     ;
 
 Multiplicative-Exprs:
     ADD Multiplicative-Expr Multiplicative-Exprs {
-        _multiplicative_expr* me = dynamic_cast<_multiplicative_expr*>($2);
-        _multiplicative_exprs* mes = dynamic_cast<_multiplicative_exprs*>($3);
-        $$ = new _multiplicative_exprs(me,mes,"ADD");
+        symbol* m = ($2);
+        symbol* ms = ($3);
+        string code = m->getCode() + ms->getCode();
+
+
+        $$ = new symbol("", code);
+        $$->addNodes(ms->getNodes());
+        $$->addNode(m->getName(), "+");
+        $$->setNames(ms->getNames());
+        $$->addName(m->getName());
+        
+
 
     }    
     | SUB Multiplicative-Expr Multiplicative-Exprs {
-        _multiplicative_expr* me = dynamic_cast<_multiplicative_expr*>($2);
-        _multiplicative_exprs* mes = dynamic_cast<_multiplicative_exprs*>($3);
-        $$ = new _multiplicative_exprs(me,mes,"SUB");
+       
+        symbol* m = ($2);
+        symbol* ms = ($3);
+        string code = m->getCode() + ms->getCode();
+        $$ = new symbol("", code);
+        $$->addNodes(ms->getNodes());
+        $$->addNode(m->getName(), "-");
+        $$->setNames(ms->getNames());
+        $$->addName(m->getName());
+        
+
+
     }    
     |  {
-        $$ = new _multiplicative_exprs();
+        $$ = new symbol();
     }    
     ; 
 
 Expression:
     Multiplicative-Expr Multiplicative-Exprs {
-        _multiplicative_expr* me = dynamic_cast<_multiplicative_expr*>($1);
-        _multiplicative_exprs* mes = dynamic_cast<_multiplicative_exprs*>($2);
-        $$ = new _expression(me, mes);
-    }    
-    ;
+        symbol* m = ($1);
+        symbol* ms = ($2);
 
-Terms:
-    MULT Term Terms {
-        _term* t = dynamic_cast<_term*>($2);
-        _terms* ts = dynamic_cast<_terms*>($3);
-        $$ = new _terms(t);
-        $$->addNode(t,"MULT");
-        $$->addNodes(ts);
-    }    
-        | DIV Term Terms {
-            _term* t = dynamic_cast<_term*>($2);
-            _terms* ts = dynamic_cast<_terms*>($3);
-            $$ = new _terms(t);
-            $$->addNode(t,"DIV");
-            $$->addNodes(ts);
-        }    
-        | MOD Term Terms {
-                _term* t = dynamic_cast<_term*>($2);
-            _terms* ts = dynamic_cast<_terms*>($3);
-            $$ = new _terms(t);
-            $$->addNode(t,"MOD");
-            $$->addNodes(ts);
-        }    
-        |  {
-            $$ = new _terms();
-        }    
-        ;
+        string code = m->getCode() + ms->getCode();
+        string temp = tm.getTemp();
+        code += ". " + temp + '\n';
+        code += "= " + temp + ", " + m->getName() + '\n';
 
+        vector<node> nodes = ms->getNodes();
+        for(int i = 0; i < nodes.size(); i++){
+            if(nodes[i].getName() == "" || nodes[i].getOp() == ""){
+                continue;
+            }
+            code += nodes[i].getOp() + " " + temp + ", " + temp + ", " + nodes[i].getName() + "\n";
+        }
 
-Multiplicative-Expr:
-    Term Terms {
-        _term* t = dynamic_cast<_term*>($1);
-        _terms* ts = dynamic_cast<_terms*>($2);
-        $$ = new _multiplicative_expr(t,ts);
+        $$ = new symbol(temp, code);
+        $$->setNames(ms->getNames());
+        $$->addName(m->getName());
+        
     }    
     ;
 
 Expressions:
     Expression Expressions {
-        _expression* e = dynamic_cast<_expression*>($1);
-        _expressions* es = dynamic_cast<_expressions*>($2);
-        $$ = new _expressions(e,es);
-
-
+        symbol* e = ($1);
+        symbol* es = ($2);
+        string code = e->getCode() + es->getCode();
+        vector<string> names = es->getNames();
+        
+        $$ = new symbol("", code);
+        $$->setNames(names);
+        $$->addName(e->getName());
+        
     }    
     | COMMA Expression Expressions {
-        _expression* e = dynamic_cast<_expression*>($2);
-        _expressions* es = dynamic_cast<_expressions*>($3);
-        $$ = new _expressions(e,es);
-        $$->setCommaFlag();
+        symbol* e = ($2);
+        symbol* es = ($3);
+        string code = e->getCode() + es->getCode();
+        vector<string> names = es->getNames();
+        string name = "";
+        $$ = new symbol(name, code);
+        $$->setNames(names);
+        $$->addName(e->getName());
+        
+        
     }    
     |  {
-        $$ = new _expressions();
+        $$ = new symbol();
     }    
     ;
 
 Term:
+    //Every case but the last case are intermediates and can be calculated without involving miniL.
+    //The last case will need to be calculated using miniL.
+    //* Push params within Expressions onto the stack.
+    //* Call the function.
+    //* Until this happens, the dest_var will hold the final value and can be reffered to by miniL for each expression.
+
     SUB Var {
-       $$ = new _term( dynamic_cast<_var*>($2), 1);
+        symbol* s = ($2);
+        string code = s->getCode();
+        string name = tm.getTemp();
+        //if it isn't a array element
+        if(s->getIndex() == ""){
+            code += ". " + name + '\n';
+            
+        }
+        else{
+            code += ".[] " + name + ", " + s->getIndex() + '\n';
+        }
+
+        code += "* " + name + ", -1, " + s->getName() + "\n";
+        
+        $$ = new symbol(name, code);
+        $$->addName(s->getName());
+
     }    
     | SUB NUMBER {
-       $$ = new _term( new _number($2), 1);
+        string num = string($2);
+        num = '-' + num;
+        string code = "";
+        $$ = new symbol(num, code);
+        
     }    
     | SUB L_PAREN Expression R_PAREN {
-       $$ = new _term( dynamic_cast<_expression*>($3), 1);
+        
+        symbol* s = ($3);
+        string code = "";
+        string name = tm.getTemp();
+        code += ". " + name + '\n';
+        code += "* " + name + ", -1, " + s->getName() + "\n";
+        $$ = new symbol(name, code);
+        $$->setNames(s->getNames());
+
     } 
     | Var {
-        $$ = new _term( dynamic_cast<_var*>($1), 0);
+        $$ = $1;
+        
     }    
     | NUMBER {
-        $$ = new _term( new _number($1), 0);
+       $$ = new symbol($1, "");
     }    
     | L_PAREN Expression R_PAREN {
-        $$ = new _term( dynamic_cast<_expression*>($2), 0);
+       
+        $$ = $2;
     }    
     | IDENT L_PAREN Expressions R_PAREN {
-        //function call
-        $$ = new _term( new _ident($1), dynamic_cast<_expressions*>($3));
+        
+        string func_name = string($1);
+        int space_index = func_name.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_");
+        if(space_index != -1){
+            func_name = func_name.substr(0,space_index);
+        }
+
+        symbol* s = ($3);
+        vector<string> params = s->getNames();
+        string temp = tm.getTemp();
+        string code = s->getCode();
+        code += ". " + temp + '\n';
+        for(int i = 0; i < params.size(); i++) {
+            code += "param " + params[i] + '\n';
+        }
+        code += "call " + func_name + ", " + temp + '\n';
+        $$ = new symbol(temp, code);
+        $$->setNames(s->getNames());
+        
+        
+    }   
+    ;
+
+Terms:
+    MULT Term Terms {
+        symbol* t = ($2);
+        symbol* ts = ($3);
+        string code = t->getCode() + ts->getCode();
+        $$ = new symbol("", code);
+        $$->addNodes(ts->getNodes());
+        $$->addNode(t->getName(), "*");
+        $$->setNames(ts->getNames());
+        $$->addName(t->getName());
+    }    
+    | DIV Term Terms {
+        symbol* t = ($2);
+        symbol* ts = ($3);     
+        string code = t->getCode() + ts->getCode();
+        $$ = new symbol("", code);
+        $$->addNodes(ts->getNodes());
+        $$->addNode(t->getName(), "/");
+        $$->setNames(ts->getNames());
+        $$->addName(t->getName());
+        
+    }    
+    | MOD Term Terms {
+        
+        symbol* t = ($2);
+        symbol* ts = ($3);
+        string code = t->getCode() + ts->getCode();
+        $$ = new symbol("", code);
+        $$->addNodes(ts->getNodes());
+        $$->addNode(t->getName(),"%");
+        $$->setNames(ts->getNames());
+        $$->addName(t->getName());
+
+    }    
+    |  {
+        $$ = new symbol();
     }    
     ;
 
 Var: 
     //variable is either an identifier or an array element.
-    IDENT {
-        $$ = new _var(new _ident($1)); 
+    IDENT { 
+        
+        string n = string($1);
+        int space_index = n.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_");
+
+        if(space_index != -1){
+            n = n.substr(0,space_index);
+        }
+        else{
+            n = n;
+        }
+        if(tm.checkType(n) == -1){
+            yyerror(("Undefined variable: " + n).c_str());
+        }
+        string code = "";
+
+        
+        $$ = new symbol(n, code);
+        $$->addName(n);
+        
+        
     }    
     | IDENT L_SQUARE_BRACKET Expression R_SQUARE_BRACKET {
-        $$ = new _var(new _ident($1), dynamic_cast<_expression*>($3));
+        
+        string n = string($1);
+        int space_index = n.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_");
+
+        if(space_index != -1){
+            n = n.substr(0,space_index);
+        }
+        else{
+            n = n;
+        }
+        if(tm.checkType($1) == -1){
+            yyerror(("Undefined variable: " + n).c_str());
+        }
+        else if(tm.checkType($1) == 0){
+            yyerror(("Variable " + n + " is not an array.").c_str());
+        }
+        symbol* s = ($3);
+        string code = s->getCode();
+        
+        n += '.' + s->getName() + '\n';
+        
+        $$ = new symbol(n, code);
+        $$->setIndex(s->getName());
+        $$->setNames(s->getNames());
+        
+
+        
+        
     }   
 
     ;
+
+Vars:
+    Var Vars {
+        symbol* v = ($1);
+        symbol* vs = ($2);
+        string name = v->getName();
+        vector<string> names = vs->getNames();
+        string code = v->getCode() + vs->getCode();
+        $$ = new symbol(name, code);
+        $$->setNames(names);
+        $$->addName(name);
+
+
+    }    
+    | COMMA Var Vars {
+        symbol* v = ($2);
+        symbol* vs = ($3);
+        string name = v->getName();
+        vector<string> names = vs->getNames();
+        string code = v->getCode() + vs->getCode();
+        $$ = new symbol(name, code);
+        $$->setNames(names);
+        $$->addName(name);
+    }    
+    |  {
+        $$ = new symbol();
+     }    
+    ;
+
+
+Declaration:
+    Identifiers COLON ENUM L_PAREN Identifiers R_PAREN SEMICOLON{
+    
+
+    }    
+    | Identifiers COLON INTEGER SEMICOLON {
+        
+        symbol* s = ($1);
+        string code = s->getCode();
+        vector<string> names = s->getNames();
+
+        for(int i = 0; i < names.size(); i++) {
+            tm.add(names[i], 0);
+            code += ". " + names[i] + "\n";
+        }
+
+        $$ = new symbol("", code);
+        $$->setNames(names);
+
+
+
+
+    }    
+    | Identifiers COLON ARRAY L_SQUARE_BRACKET NUMBER R_SQUARE_BRACKET OF INTEGER SEMICOLON {
+        symbol* s = ($1);
+       
+        string num = string($5);
+        string code = s->getCode();
+        vector<string> names = s->getNames();
+
+        for(int i = 0; i < names.size(); i++) {
+            tm.add(names[i], stoi(num));
+            code += ".[] " + names[i] + ", " + num + "\n";
+        }
+
+        $$ = new symbol("", code);
+        $$->setNames(names);
+        $$->setSize(num);
+    }   
+    ;
+  
+    ;
+
+Declarations:
+    Declaration Declarations {
+        symbol* s1 = ($1);
+        symbol* s2 = ($2);
+        string code = s1->getCode() + s2->getCode();
+        $$ = new symbol("", code);
+        $$->addNames(s2->getNames());
+        $$->addName(s1->getName());
+    }    
+    | {
+        $$ = new symbol();
+    }    
+    ;
+
+//Identifiers is a list of identifiers. Separated by new lines.
+Identifiers:
+    IDENT COMMA Identifiers {
+        
+        $$ = new symbol();
+        $$->addNames($3->getNames());
+        $$->addName($1);
+    }    
+    | IDENT {
+        $$ = new symbol();
+        $$->addName($1);
+    }   
+    |  {
+        $$ = new symbol();
+    }    
+    ;
+
 
 %% 
 
 
 void yyerror(const char *msg) {
-	printf("Error: Line: %s, Col: %s \n", currLine, currCol);
+	cout << "Error: " << msg << ", Line: " << currLine <<  ",  Col: " << currCol <<  "\n";
+    errorFlag = true;
 }
 
 int main(int argc, char ** argv) {
+
 	yyparse();
 	return 1;
 }

@@ -21,7 +21,10 @@ M_DIGIT         {DIGIT}+
 LETTER          [a-zA-Z]
 M_LETTER        {LETTER}+
 U_SCORE         "_"
-IDENT           {M_LETTER}|{M_LETTER}({M_DIGIT}|{M_LETTER})*|{M_LETTER}({M_LETTER}|{M_DIGIT}|{U_SCORE})*
+IDENT		    {M_LETTER}|{M_LETTER}({M_DIGIT}|{M_LETTER})*|{M_LETTER}({M_LETTER}|{M_DIGIT}|{U_SCORE})*
+BAD_IDENT		{IDENT}{U_SCORE}|{M_DIGIT}{IDENT}
+
+
 
 %%
 
@@ -72,12 +75,13 @@ IDENT           {M_LETTER}|{M_LETTER}({M_DIGIT}|{M_LETTER})*|{M_LETTER}({M_LETTE
 "["             {increaseCol(); return L_SQUARE_BRACKET;}
 "]"             {increaseCol(); return R_SQUARE_BRACKET;}
 ":="            {increaseCol(); return ASSIGN;}
-" "             {increaseCol();}
-"\n"            {increaseLine();}
-"\t"            {increaseCol();}
+" "+             {increaseCol();}
+"\n"+            {increaseLine();}
+"\t"+            {increaseCol();}
 {COMMENT}		{increaseLine();}
+{BAD_IDENT}		{increaseCol(); printf("Bad Identifier: %s\n", yytext); exit(1);}
 {IDENT}			{increaseCol(); yylval.str_val = yytext; return IDENT;}
-{M_DIGIT}		{increaseCol(); yylval.int_val = yytext; return NUMBER;}
+{M_DIGIT}		{increaseCol(); yylval.str_val = yytext; return NUMBER;}
 .               {printf("Error at line: %d , Col: %d \n", currLine, currCol); exit(1);}//error
 %%
 
