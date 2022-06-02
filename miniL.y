@@ -27,7 +27,7 @@ Program:
     if(!tm.checkFunction("main")){
         yyerror("main function not found");
     }
-    //if(errorFlag){exit(1);}
+    if(errorFlag){exit(1);}
     fstream outfile;
     outfile.open("output.s", fstream::out);
     outfile << $1->getCode();
@@ -129,7 +129,7 @@ Statement:
         symbol* b = ($2);
         symbol* s = ($4);
         string temp = tm.getTemp();
-        string code = b->getCode() + s->getCode();
+        string code = b->getCode();
         string label = tm.getLabel();
         code += ". " + temp + '\n';
         code += "! " + temp + ", " + b->getName() + '\n';
@@ -139,7 +139,7 @@ Statement:
         string name = "";
         $$ = new symbol(name, code);
         $$->setNames(b->getNames());
-        $$->addNames(s->getNames());
+        
 
 
     }    
@@ -147,7 +147,7 @@ Statement:
         symbol* b = ($2);
         symbol* s1 = ($4);
         symbol* s2 = ($6);
-        string code = b->getCode() + s1->getCode() + s2->getCode();
+        string code = "";
         string label = tm.getLabel();
         string label2 = tm.getLabel();
         string temp = tm.getTemp();
@@ -167,11 +167,12 @@ Statement:
     | WHILE Bool-Expr BEGINLOOP Statements ENDLOOP SEMICOLON {
         symbol* b = ($2);
         symbol* s = ($4);
-        string code = b->getCode() + s->getCode();
+        string code = b->getCode();
         string label = tm.getLabel();
         string label2 = tm.getLabel();
         string temp = tm.getTemp();
         code += ": " + label + "\n";
+        code += b->getCode();
         code += ". " + temp + "\n";
         code += "! " + temp + ", " + b->getName() + "\n";
         code += "?:= " + label2 + ", " + temp + "\n";
@@ -188,7 +189,7 @@ Statement:
     | DO BEGINLOOP Statements ENDLOOP WHILE Bool-Expr SEMICOLON {
         symbol* s = ($3);
         symbol* b = ($6);
-        string code = s->getCode() + b->getCode();
+        string code = b->getCode();
         string label = tm.getLabel();
         code += ": " + label + "\n";
         code += s->getCode();
@@ -264,8 +265,9 @@ Statements:
             names.push_back(s->getName());
         }
         $$ = new symbol("", code);
-        $$->setNames(names);
+        
         $$->addName(s->getName());
+        $$->addNames(ss->getNames());
     }    
     |  {
         $$ = new symbol();
@@ -542,11 +544,6 @@ Expressions:
     ;
 
 Term:
-    //Every case but the last case are intermediates and can be calculated without involving miniL.
-    //The last case will need to be calculated using miniL.
-    //* Push params within Expressions onto the stack.
-    //* Call the function.
-    //* Until this happens, the dest_var will hold the final value and can be reffered to by miniL for each expression.
 
     SUB Var {
         symbol* s = ($2);

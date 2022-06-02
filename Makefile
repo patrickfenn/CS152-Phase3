@@ -18,4 +18,4 @@ miniL-parser.cpp: miniL.y
 	bison -d -v -g -o $@ $<
 
 clean:
-	rm -f *.o miniL-lex.cpp miniL-parser.cpp miniL-parser.hpp stack.hh *.output *.dot miniL
+	rm -f *.o miniL-lex.cpp miniL-parser.cpp miniL-parser.hpp stack.hh *.output *.dot miniL fibonacci.mil
