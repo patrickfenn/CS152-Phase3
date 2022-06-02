@@ -124,11 +124,6 @@ class symbol{
     }
 };
 
-struct funcs{
-
-    
-
-};
 class TableManager{
     private:
     map<string,int> table;

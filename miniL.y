@@ -821,7 +821,7 @@ Identifiers:
 
 
 void yyerror(const char *msg) {
-	cout << "Error: " << msg << ", Line: " << currLine <<  ",  Col: " << currCol <<  "\n";
+    cout << "Error: " << msg << ", Line: " << currLine <<  ",  Col: " << currCol <<  "\n";
     errorFlag = true;
 }
 
