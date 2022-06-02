@@ -12,6 +12,7 @@ void yyerror(const char *msg);
 
 TableManager tm;
 bool errorFlag = 0;
+string filename = "default.mil";
 %}
 
 %define api.value.type {union YYSTYPE}
@@ -29,7 +30,7 @@ Program:
     }
     if(errorFlag){exit(1);}
     fstream outfile;
-    outfile.open("output.s", fstream::out);
+    outfile.open(filename, fstream::out);
     outfile << $1->getCode();
     outfile.close();
 
@@ -744,7 +745,23 @@ Vars:
 
 Declaration:
     Identifiers COLON ENUM L_PAREN Identifiers R_PAREN SEMICOLON{
-    
+        symbol* i1 = $1;
+        symbol* i2 = $5;
+        vector<string> params = i2->getNames();
+        vector<string> names = i1->getNames();
+        string code = i1->getCode() + i2->getCode();
+
+        for(int i = 0; i < names.size(); i++){
+            tm.add(names[i], -2);
+            code += ". " + names[i] + '\n';
+            for(int j = 0; j < params.size(); j++){
+                code += ". " + params[j] + '\n';
+                code += "= " + params[j] + ", " + to_string(j) + '\n';
+            }
+        }
+        $$ = new symbol("", code);
+        $$->addNames(i2->getNames());
+        $$->addNames(i1->getNames());
 
     }    
     | Identifiers COLON INTEGER SEMICOLON {
