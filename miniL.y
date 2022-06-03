@@ -89,31 +89,53 @@ Function:
         }
 
         istringstream iss2(s->getCode());
-        string new_s_code = "";
+        int scout,scout2;
+        vector<string> new_s_code;
+        vector<int> continue_found;
         bool foundLoop = false;
+        string label;
         //check for loops and set flag. 
         //check for continue and check loop flag (spit error if continue is used outside of loop)
         while(getline(iss2,line)){
+
+            //marks beginning/end of a loop
             if(line == "_L"){
                 foundLoop = !foundLoop;
                 continue;
             }
 
-
+            //marks continue statement
             if(line == "_C"){
                 if(foundLoop){
-                    new_s_code += line.substr(1,line.length()-1) + '\n';
+                    continue_found.push_back(new_s_code.size());
+                    continue;
                 }
                 else{
                     yyerror("Continue statement outside of a loop.");
                 }
             }
-            
-            new_s_code += line + '\n';
+
+            //backpatch continue label jump.
+            scout = line.find("label");
+            if(line.find("label") == -1){
+                if(!continue_found.empty()){
+                    label = line.substr(scout,line.length()-1);
+                    scout2 = new_s_code[continue_found.back()].find("label");
+                    new_s_code[continue_found.back()] = new_s_code[continue_found.back()].substr(0,scout2) + label + '\n';
+                    continue_found.pop_back();
+
+                }
+            }
+            new_s_code.push_back(line + '\n');
 
         }
 
-        code += new_code + d2->getCode() + new_s_code;
+        string final_s_code = "";
+        for(int i = 0; i < new_s_code.size(); i++){
+            final_s_code += new_s_code[i];
+        }
+
+        code += new_code + d2->getCode() + final_s_code;
         code += "endfunc\n\n";
         $$ = new symbol(n, code);
   
