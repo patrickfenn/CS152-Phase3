@@ -34,6 +34,7 @@ class symbol{
     string code, name, op, size,index;
     vector<string> names;
     vector<node> nodes;
+    bool isContinue;
 
     public:
     symbol(){
@@ -125,7 +126,11 @@ class symbol{
 };
 
 class TableManager{
+
+    //type for normal id is 0, array has size > 0, enum is -2. -1 is error
     private:
+
+    const set<string> reserved_words = {"function", "beginparams", "endparams", "beginlocals", "endlocals", "beginbody", "endbody", "integer", "array", "enum", "of", "if", "then", "endif", "else", "for", "while", "do", "beginloop", "endloop", "continue", "read", "write", "and", "or", "not", "true", "false", "return", "_L", "_C"};
     map<string,int> table;
     set<string> functions;
     stack< map<string,int> > table_stack;
@@ -151,13 +156,20 @@ class TableManager{
         }
         return false;
     }
-    void add(string name, int size){
+    bool checkReserve(string name){
+        return reserved_words.find(name) != reserved_words.end();
+    }
+
+    //return 1 if add was successful, 0 if it is a reserved word, -1 if it already exists
+    int add(string name, int size){
         if(!check(name)){
             table[name] = size;
+            return 1;
         }
-        else{
-            cout << "Error: " << name << " is already defined" << endl;
+        else if(checkReserve(name)){
+            return 0;
         }
+        else return -1;
     }
 
     string getTemp(){

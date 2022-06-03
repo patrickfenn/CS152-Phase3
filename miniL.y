@@ -28,7 +28,11 @@ Program:
     if(!tm.checkFunction("main")){
         yyerror("main function not found");
     }
-    if(errorFlag){exit(1);}
+    if(errorFlag){
+        cout << "Error(s) detected, aborting code generation.." << endl;
+        exit(1);
+    }
+
     fstream outfile;
     outfile.open(filename, fstream::out);
     outfile << $1->getCode();
@@ -39,6 +43,7 @@ Program:
     | {
         yyerror("No program found");
     }   
+    
     ;
 
 //Functions will need their own symbol table pushed onto the stack.
@@ -71,6 +76,9 @@ Function:
         string line;
         string new_code = "";
         int count = 0;
+
+        
+        //check for function arguments and generate param declaration code.
         while(getline(iss,line)){
             
             new_code += line + '\n';
@@ -80,7 +88,32 @@ Function:
             }
         }
 
-        code += new_code + d2->getCode() + s->getCode();
+        istringstream iss2(s->getCode());
+        string new_s_code = "";
+        bool foundLoop = false;
+        //check for loops and set flag. 
+        //check for continue and check loop flag (spit error if continue is used outside of loop)
+        while(getline(iss2,line)){
+            if(line == "_L"){
+                foundLoop = !foundLoop;
+                continue;
+            }
+
+
+            if(line == "_C"){
+                if(foundLoop){
+                    new_s_code += line.substr(1,line.length()-1) + '\n';
+                }
+                else{
+                    yyerror("Continue statement outside of a loop.");
+                }
+            }
+            
+            new_s_code += line + '\n';
+
+        }
+
+        code += new_code + d2->getCode() + new_s_code;
         code += "endfunc\n\n";
         $$ = new symbol(n, code);
   
@@ -103,6 +136,8 @@ Functions:
     |  {
         $$ = new symbol();
     }    
+    | error Functions{yyerrok;}
+    
     ;
 
 
@@ -168,6 +203,8 @@ Statement:
     | WHILE Bool-Expr BEGINLOOP Statements ENDLOOP SEMICOLON {
         symbol* b = ($2);
         symbol* s = ($4);
+
+        
         string code = b->getCode();
         string label = tm.getLabel();
         string label2 = tm.getLabel();
@@ -177,9 +214,12 @@ Statement:
         code += ". " + temp + "\n";
         code += "! " + temp + ", " + b->getName() + "\n";
         code += "?:= " + label2 + ", " + temp + "\n";
+        code += "_L\n";
         code += s->getCode();
+        code += "_L\n";
         code += "?:= " + label + ", " + b->getName() + "\n";
         code += ": " + label2 + "\n";
+        
         string name = "";
         $$ = new symbol(name, code);
         $$->setNames(b->getNames());
@@ -193,7 +233,9 @@ Statement:
         string code = b->getCode();
         string label = tm.getLabel();
         code += ": " + label + "\n";
+        code += "_L\n";
         code += s->getCode();
+        code += "_L\n";
         code += "?:= " + label + ", " + b->getName() + "\n";
         string name = "";
         $$ = new symbol(name, code);
@@ -241,7 +283,8 @@ Statement:
     }    
     | CONTINUE SEMICOLON {
         string name = "";
-        string code = ": " + tm.getLastLabel() + "\n";
+        string code = "_C\n";
+        code += ": " + tm.getLastLabel() + "\n";
         $$ = new symbol(name, code);
     }    
     | RETURN Expression SEMICOLON {
@@ -272,7 +315,9 @@ Statements:
     }    
     |  {
         $$ = new symbol();
-    }    
+    }
+    | Statement error{yyerrok;}
+        
     ;
 
 
@@ -670,12 +715,14 @@ Var:
         else{
             n = n;
         }
+    
         if(tm.checkType(n) == -1){
-            yyerror(("Undefined variable: " + n).c_str());
+            yyerror(("Referring to Undefined variable: " + n).c_str());
         }
         else if(tm.checkType(n) > 0){
-            yyerror(("Variable is an array but referred to as a value: " + n).c_str());
+            yyerror(("Array access without an index: " + n).c_str());
         }
+
         string code = "";
 
         
@@ -754,8 +801,19 @@ Declaration:
         vector<string> names = i1->getNames();
         string code = i1->getCode() + i2->getCode();
 
+        int result_code = 0;
+
         for(int i = 0; i < names.size(); i++){
-            tm.add(names[i], -2);
+
+            result_code = tm.add(names[i], -2);
+            if(result_code == -1){
+                yyerror(("Redefinition of enum: " + names[i]).c_str());
+            }
+            else if(result_code == 0){
+                yyerror(("Name is reserved: " + names[i]).c_str());
+            }
+
+
             code += ". " + names[i] + '\n';
             for(int j = 0; j < params.size(); j++){
                 code += ". " + params[j] + '\n';
@@ -772,9 +830,16 @@ Declaration:
         symbol* s = ($1);
         string code = s->getCode();
         vector<string> names = s->getNames();
+        int result_code = 0;
 
         for(int i = 0; i < names.size(); i++) {
-            tm.add(names[i], 0);
+            result_code = tm.add(names[i], 0);
+            if(result_code == -1){
+                yyerror(("Redefinition of variable: " + names[i]).c_str());
+            }
+            else if(result_code == 0){
+                yyerror(("Name is reserved: " + names[i]).c_str());
+            }
             code += ". " + names[i] + "\n";
         }
 
@@ -791,9 +856,29 @@ Declaration:
         string num = string($5);
         string code = s->getCode();
         vector<string> names = s->getNames();
+        int result_code = 0;
+        int index;
+
+        try{
+            index = stoi(num);
+        }
+        catch(exception e){
+            yyerror(("Invalid array size: " + num).c_str());
+        }
+
+        if(stoi(num) < 1){
+            yyerror(("Array size must be greater than 0: " + num).c_str());
+        }
+
 
         for(int i = 0; i < names.size(); i++) {
-            tm.add(names[i], stoi(num));
+            result_code = tm.add(names[i], stoi(num));
+            if(result_code == -1){
+                yyerror(("Redefinition of array: " + names[i]).c_str());
+            }
+            else if(result_code == 0){
+                yyerror(("Name is reserved: " + names[i]).c_str());
+            }
             code += ".[] " + names[i] + ", " + num + "\n";
         }
 
@@ -817,6 +902,7 @@ Declarations:
     | {
         $$ = new symbol();
     }    
+    | Declaration error{yyerrok;}
     ;
 
 //Identifiers is a list of identifiers. Separated by new lines.

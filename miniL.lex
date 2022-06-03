@@ -12,6 +12,7 @@ int currLine = 1;
 int currCol = 1;
 void increaseCol();
 void increaseLine();
+extern void yyerror(const char *s);
 
 %}
 
@@ -79,10 +80,10 @@ BAD_IDENT		{IDENT}{U_SCORE}|{M_DIGIT}{IDENT}
 "\n"+            {increaseLine();}
 "\t"+            {increaseCol();}
 {COMMENT}		{increaseLine();}
-{BAD_IDENT}		{increaseCol(); printf("Bad Identifier: %s\n", yytext); exit(1);}
+{BAD_IDENT}		{increaseCol(); yyerror(("Bad Identifier: " + string(yytext)).c_str());}
 {IDENT}			{increaseCol(); yylval.str_val = yytext; return IDENT;}
 {M_DIGIT}		{increaseCol(); yylval.str_val = yytext; return NUMBER;}
-.               {printf("Error at line: %d , Col: %d \n", currLine, currCol); exit(1);}//error
+.               {yyerror(("Error at line: " + to_string(currLine) + " , Col: " + to_string(currCol) + '\n').c_str()); }//error
 %%
 
 
