@@ -673,6 +673,9 @@ Var:
         if(tm.checkType(n) == -1){
             yyerror(("Undefined variable: " + n).c_str());
         }
+        else if(tm.checkType(n) > 0){
+            yyerror(("Variable is an array but referred to as a value: " + n).c_str());
+        }
         string code = "";
 
         
@@ -843,7 +846,7 @@ void yyerror(const char *msg) {
 }
 
 int main(int argc, char ** argv) {
-
+    
 	yyparse();
 	return 1;
 }
