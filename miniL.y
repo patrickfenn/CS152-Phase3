@@ -13,6 +13,17 @@ void yyerror(const char *msg);
 TableManager tm;
 bool errorFlag = 0;
 string filename = "default.mil";
+string trimWord(string n){
+    int space_index = n.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_");
+    if(space_index != -1){
+        n = n.substr(0,space_index);
+    }
+    else{
+        n = n;
+    }
+    return n;
+}
+
 %}
 
 %define api.value.type {union YYSTYPE}
@@ -53,14 +64,7 @@ Function:
 
         
         string n = string($2);
-        int space_index = n.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_");
-
-        if(space_index != -1){
-            n = n.substr(0,space_index);
-        }
-        else{
-            n = n;
-        }
+        n = trimWord(n);
         if(tm.checkFunction(n)){
             yyerror("Function already exists");
         }
@@ -86,12 +90,13 @@ Function:
                 new_code += "= " + line.substr(2,line.length()-1) + ", $" + to_string(count) + '\n';
                 count++;
             }
+            
         }
 
         istringstream iss2(s->getCode());
         int scout,scout2;
         vector<string> new_s_code;
-        vector<int> continue_found;
+        int continue_found = -1;
         bool foundLoop = false;
         string label;
         //check for loops and set flag. 
@@ -107,7 +112,7 @@ Function:
             //marks continue statement
             if(line == "_C"){
                 if(foundLoop){
-                    continue_found.push_back(new_s_code.size());
+                    continue_found = new_s_code.size();
                     continue;
                 }
                 else{
@@ -115,19 +120,21 @@ Function:
                 }
             }
 
+
+            new_s_code.push_back(line + '\n');
+
             //backpatch continue label jump.
             scout = line.find("label");
-            if(line.find("label") == -1){
-                if(!continue_found.empty()){
+            if(scout != -1){
+                if(continue_found != -1){
+                    
                     label = line.substr(scout,line.length()-1);
-                    scout2 = new_s_code[continue_found.back()].find("label");
-                    new_s_code[continue_found.back()] = new_s_code[continue_found.back()].substr(0,scout2) + label + '\n';
-                    continue_found.pop_back();
+                    scout2 = new_s_code[0].find("label");
+                    new_s_code[continue_found] = new_s_code[continue_found].substr(0,3) + label + '\n';
+                    continue_found = -1;
 
                 }
             }
-            new_s_code.push_back(line + '\n');
-
         }
 
         string final_s_code = "";
@@ -306,7 +313,7 @@ Statement:
     | CONTINUE SEMICOLON {
         string name = "";
         string code = "_C\n";
-        code += ": " + tm.getLastLabel() + "\n";
+        code += ":= " + tm.getLastLabel() + "\n";
         $$ = new symbol(name, code);
     }    
     | RETURN Expression SEMICOLON {
@@ -357,7 +364,7 @@ Bool-Expr:
             if(nodes[i].getName() == "" || nodes[i].getOp() == ""){
                 continue;
             }
-            code += nodes[i].getOp() + temp + ", " + nodes[i].getName() + '\n';
+            code += nodes[i].getOp() + " " +  temp + ", " + nodes[i].getName() + '\n';
         }
 
         $$ = new symbol(temp, code);
@@ -664,10 +671,7 @@ Term:
     | IDENT L_PAREN Expressions R_PAREN {
         
         string func_name = string($1);
-        int space_index = func_name.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_");
-        if(space_index != -1){
-            func_name = func_name.substr(0,space_index);
-        }
+        func_name = trimWord(func_name);
 
         symbol* s = ($3);
         vector<string> params = s->getNames();
@@ -729,17 +733,10 @@ Var:
     IDENT { 
         
         string n = string($1);
-        int space_index = n.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_");
-
-        if(space_index != -1){
-            n = n.substr(0,space_index);
-        }
-        else{
-            n = n;
-        }
+        n = trimWord(n);
     
         if(tm.checkType(n) == -1){
-            yyerror(("Referring to Undefined variable: " + n).c_str());
+            yyerror(("Undefined variable: " + n).c_str());
         }
         else if(tm.checkType(n) > 0){
             yyerror(("Array access without an index: " + n).c_str());
@@ -756,24 +753,22 @@ Var:
     | IDENT L_SQUARE_BRACKET Expression R_SQUARE_BRACKET {
         
         string n = string($1);
-        int space_index = n.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_");
-
-        if(space_index != -1){
-            n = n.substr(0,space_index);
-        }
-        else{
-            n = n;
-        }
-        if(tm.checkType($1) == -1){
+        n = trimWord(n);
+        
+        if(tm.checkType(n) == -1){
             yyerror(("Undefined variable: " + n).c_str());
         }
-        else if(tm.checkType($1) == 0){
+        else if(tm.checkType(n) == 0){
             yyerror(("Variable " + n + " is not an array.").c_str());
         }
+        
         symbol* s = ($3);
         string code = s->getCode();
-        
-        n += '.' + s->getName() + '\n';
+        string sname = s->getName();
+        sname = trimWord(sname);
+
+
+        n += '.' + sname + '\n';
         
         $$ = new symbol(n, code);
         $$->setIndex(s->getName());
@@ -881,6 +876,8 @@ Declaration:
         int result_code = 0;
         int index;
 
+        num = trimWord(num);
+
         try{
             index = stoi(num);
         }
@@ -930,14 +927,17 @@ Declarations:
 //Identifiers is a list of identifiers. Separated by new lines.
 Identifiers:
     IDENT COMMA Identifiers {
-        
+        string n = string($1);
+        n = trimWord(n);
         $$ = new symbol();
         $$->addNames($3->getNames());
-        $$->addName($1);
+        $$->addName(n);
     }    
     | IDENT {
+        string n = string($1);
+        n = trimWord(n);
         $$ = new symbol();
-        $$->addName($1);
+        $$->addName(n);
     }   
     |  {
         $$ = new symbol();

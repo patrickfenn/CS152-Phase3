@@ -11,6 +11,9 @@
 #include <fstream>
 
 using namespace std;
+
+
+
 class node{
     private:
     string name, op;
@@ -42,7 +45,7 @@ class symbol{
 
     }
     symbol(string n, string c){
-        int space_index = n.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_");
+        int space_index = n.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_") -1;
         if(space_index != -1){
             name = n.substr(0,space_index);
         }
@@ -76,7 +79,7 @@ class symbol{
         code = c;
     }
     void setName(string n){
-        int space_index = n.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_");
+        int space_index = n.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_") -1;
         if(space_index != -1){
             name = n.substr(0,space_index);
         }
@@ -88,7 +91,7 @@ class symbol{
         op = o;
     }
     void addName(string n){
-        int space_index = n.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_");
+        int space_index = n.find_first_not_of("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ01234567890_") -1;
 
         if(space_index != -1){
             n = n.substr(0,space_index);
