@@ -1,5 +1,6 @@
 CS152 Project Phase 3 - Code Generation
 ========================================
+Grade Received: 11/11
 
 [Home Page - Phase3 Code Generation](https://cs152-ucr-gupta.github.io/website/phase3_code_generator.html)
 
